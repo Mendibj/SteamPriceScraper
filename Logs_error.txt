@@ -1,0 +1,11 @@
+31/10/2019 16:09:43 Error al cargar la página 99
+31/10/2019 16:10:30 Error al cargar la página 2332
+31/10/2019 16:10:32 Error al cargar la página 984
+31/10/2019 16:10:33 Error al cargar la página 1880
+31/10/2019 16:11:39 Error al cargar la página 2350
+31/10/2019 16:11:43 Error al cargar la página 588
+31/10/2019 16:12:19 Error al cargar la página 201
+31/10/2019 16:15:21 Error al cargar la página 2067
+31/10/2019 16:16:21 Error al cargar la página 796
+31/10/2019 16:17:19 Error al cargar la página 804
+31/10/2019 16:19:21 Error al cargar la página 853
