@@ -2,6 +2,8 @@ import requests
 import csv
 import os
 import pandas
+import time
+import argparse
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -14,29 +16,37 @@ def formatNumber(numb):
         n = float(n)
     return n
 
+def getLastPage(strPage):
+    page = requests.get(strPage)
+    soup = BeautifulSoup(page.content, features="lxml")
+    div = soup.find('div', attrs={'class':'search_pagination_right'})
+    children = div.findChildren("a" , recursive=False)
+    return int(children[2].text)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--fp", help="Page where starts the scraping")
+parser.add_argument("--lp", help="Page where ends the scraping")
+args = parser.parse_args()
+
 dates = []
 names = []
 cPrices = []
 tPrices = []
 
-todayDate = datetime.today().strftime('%d-%m-%Y %H:%M')
-contadorPaginas = 1
-
 strPage = "https://store.steampowered.com/search/?page="
 logError = open("Logs_error.txt","a",encoding='utf-8')
 
-page = requests.get(strPage)
-soup = BeautifulSoup(page.content, features="lxml")
-div = soup.find('div', attrs={'class':'search_pagination_right'})
-children = div.findChildren("a" , recursive=False)
-lastPage = int(children[2].text)
+contadorPaginas = int(args.fp) if args.fp != None else 1
+lastPage = int(args.lp) if args.lp != None else getLastPage(strPage)
 
 while(contadorPaginas <= lastPage):
     page = requests.get(strPage+str(contadorPaginas))
-    resultsRows = None
     intentos = 0
+    soup = BeautifulSoup(page.content, features="lxml")
+    resultsRows = soup.find(id="search_resultsRows")
 
     while(resultsRows == None and intentos < 10):
+        time.sleep(5)
         soup = BeautifulSoup(page.content, features="lxml")
         resultsRows = soup.find(id="search_resultsRows")
         intentos += 1
@@ -62,7 +72,7 @@ while(contadorPaginas <= lastPage):
                     price = formatNumber(pricesL[0])
                     cprice = formatNumber(pricesL[1])
 
-                dates.append(todayDate)
+                dates.append(datetime.today().strftime('%d-%m-%Y %H:%M'))
                 names.append("\'"+title+"\'")
                 cPrices.append(cprice)
                 tPrices.append(price)
@@ -74,8 +84,9 @@ while(contadorPaginas <= lastPage):
     
 df = pandas.DataFrame(data={"Date": dates, "Name": names, "Total price": tPrices, "Current price": cPrices})
 
-if not os.path.isfile("filename.csv"):
-    df.to_csv("filename.csv", sep=',',index=False)
+csvName = "data.csv"
+if not os.path.isfile(csvName):
+    df.to_csv(csvName, sep=',',index=False)
 else:
-    df.to_csv("filename.csv", mode='a', header=False)
+    df.to_csv(csvName, mode='a', header=False)
 logError.close()
