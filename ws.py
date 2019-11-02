@@ -5,6 +5,7 @@ import pandas
 import time
 import argparse
 import threading
+import shutil
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -27,11 +28,33 @@ def getLastPage(strPage):
     children = div.findChildren("a" , recursive=False)
     return int(children[2].text)
 
+def dataToCSV(data, route):
+    if not os.path.isfile(route):
+        data.to_csv(route, sep=',', index=False)
+    else:
+        data.to_csv(route, mode='a', header=False, index=False)
+    logError.close()
+
+def fusionDataFrame(dataList):
+    df = pandas.DataFrame(data={"Date": [], "Name": [], "Total price": [], "Current price": [], "Image path": []})
+    for d in dataList:
+        df = df.append(d, ignore_index = True)
+    return df
+
+def downloadImage(image_url, path):
+    local_file = open(path, 'wb')
+
+    resp = requests.get(image_url, stream=True)
+    resp.raw.decode_content = True
+    shutil.copyfileobj(resp.raw, local_file)
+    del resp
+
 def scrThread(firstPage, lastPage, dfList):
     dates = []
     names = []
     cPrices = []
     tPrices = []
+    imgPaths = []
     
     while(firstPage <= lastPage):
         page = requests.get(strPage+str(firstPage))
@@ -66,16 +89,21 @@ def scrThread(firstPage, lastPage, dfList):
                         price = formatNumber(pricesL[0])
                         cprice = formatNumber(pricesL[1])
 
+                    imgUrl = a.find('div', attrs={'class':'col search_capsule'}).find('img')['src']
+                    imgRoute = "images/"+a["data-ds-appid"]+" "+str(datetime.now().strftime("%d-%m-%Y %H.%M.%S")+".jpg")
+                    imgPaths.append("\'"+imgRoute+"\'")
+                    downloadImage(imgUrl, imgRoute)
+
                     dates.append(datetime.today().strftime('%d-%m-%Y %H:%M'))
                     names.append("\'"+title+"\'")
                     cPrices.append(cprice)
                     tPrices.append(price)
                 except:
-                    logError.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S")+' Error al cargar la página '+str(firstPage)+'\n')
+                    logError.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S")+' Error en la página '+str(firstPage)+' elemento '+a["data-ds-appid"]+'\n')
 
         firstPage += 1
 
-    df = pandas.DataFrame(data={"Date": dates, "Name": names, "Total price": tPrices, "Current price": cPrices})
+    df = pandas.DataFrame(data={"Date": dates, "Name": names, "Total price": tPrices, "Current price": cPrices, "Image path": imgPaths})
     dfList.append(df)
 
 parser = argparse.ArgumentParser()
@@ -90,6 +118,7 @@ logError = open("Logs_error.txt","a",encoding='utf-8')
 firstPage = int(args.fp) if args.fp != None else 1
 lastPage = int(args.lp) if args.lp != None else getLastPage(strPage)
 nThreads = int(args.t) if args.t != None else 1
+csvRoute = "csv/data.csv"
 
 dfList = []
 trList = []
@@ -104,16 +133,7 @@ for t in range(0,nThreads):
 for t in trList:
     t.join()
 
-df = pandas.DataFrame(data={"Date": [], "Name": [], "Total price": [], "Current price": []})
-for d in dfList:
-    df = df.append(d, ignore_index = True)
+df = fusionDataFrame(dfList)
+dataToCSV(df, csvRoute)
 
-csvName = "data.csv"
-if not os.path.isfile(csvName):
-    df.to_csv(csvName, sep=',',index=False)
-else:
-    df.to_csv(csvName, mode='a', header=False)
-logError.close()
-
-
-print("--- %s seconds ---" % (time.clock() - startTime))
+print("Finished in %s seconds" % round((time.clock() - startTime),2))
