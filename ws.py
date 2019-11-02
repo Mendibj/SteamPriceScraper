@@ -90,7 +90,7 @@ def scrThread(firstPage, lastPage, dfList):
                         cprice = formatNumber(pricesL[1])
 
                     imgUrl = a.find('div', attrs={'class':'col search_capsule'}).find('img')['src']
-                    imgRoute = "images/"+a["data-ds-appid"]+" "+str(datetime.now().strftime("%d-%m-%Y %H.%M.%S")+".jpg")
+                    imgRoute = "images/"+a["data-ds-itemkey"]+" "+str(datetime.now().strftime("%d-%m-%Y %H.%M.%S")+".jpg")
                     imgPaths.append("\'"+imgRoute+"\'")
                     downloadImage(imgUrl, imgRoute)
 
@@ -99,7 +99,7 @@ def scrThread(firstPage, lastPage, dfList):
                     cPrices.append(cprice)
                     tPrices.append(price)
                 except:
-                    logError.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S")+' Error en la página '+str(firstPage)+' elemento '+a["data-ds-appid"]+'\n')
+                    logError.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S")+' Error en la página '+str(firstPage)+' elemento '+a["data-ds-itemkey"]+'\n')
 
         firstPage += 1
 
