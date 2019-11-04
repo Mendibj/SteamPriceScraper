@@ -10,8 +10,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 startTime = time.clock()
-
-
+ 
 def formatNumber(numb):
     n = ''.join(c for c in numb if c.isdigit() or c == ',')
     if(n == ''):
@@ -36,7 +35,7 @@ def dataToCSV(data, route):
     logError.close()
 
 def fusionDataFrame(dataList):
-    df = pandas.DataFrame(data={"Date": [], "Name": [], "Total price": [], "Current price": [], "Image path": []})
+    df = pandas.DataFrame(data={"ID": [], "Date": [], "Name": [], "Total price": [], "Current price": [], "Image path": []})
     for d in dataList:
         df = df.append(d, ignore_index = True)
     return df
@@ -50,20 +49,20 @@ def downloadImage(image_url, path):
     del resp
 
 def scrThread(firstPage, lastPage, dfList):
+    ids = []
     dates = []
-    names = []
+    titles = []
     cPrices = []
     tPrices = []
     imgPaths = []
     
     while(firstPage <= lastPage):
-        page = requests.get(strPage+str(firstPage))
         intentos = 0
-        soup = BeautifulSoup(page.content, features="lxml")
-        resultsRows = soup.find(id="search_resultsRows")
+        resultsRows = None
 
         while(resultsRows == None and intentos < 10):
-            time.sleep(5)
+            page = requests.get(strPage+str(firstPage))
+            time.sleep(intentos*3)
             soup = BeautifulSoup(page.content, features="lxml")
             resultsRows = soup.find(id="search_resultsRows")
             intentos += 1
@@ -74,6 +73,7 @@ def scrThread(firstPage, lastPage, dfList):
             resultsA = resultsRows.findAll('a')
             for a in resultsA:
                 try:
+                    id = a["data-ds-itemkey"]
                     title = a.find('span', attrs={'class':'title'}).text
                     price = a.find('div', attrs={'class':'col search_price responsive_secondrow'})
                     cprice = 0
@@ -90,20 +90,21 @@ def scrThread(firstPage, lastPage, dfList):
                         cprice = formatNumber(pricesL[1])
 
                     imgUrl = a.find('div', attrs={'class':'col search_capsule'}).find('img')['src']
-                    imgRoute = "images/"+a["data-ds-itemkey"]+" "+str(datetime.now().strftime("%d-%m-%Y %H.%M.%S")+".jpg")
+                    imgRoute = "images/"+id+" "+str(datetime.now().strftime("%d-%m-%Y %H.%M.%S")+".jpg")
                     imgPaths.append("\'"+imgRoute+"\'")
                     downloadImage(imgUrl, imgRoute)
 
+                    ids.append(id)
                     dates.append(datetime.today().strftime('%d-%m-%Y %H:%M'))
-                    names.append("\'"+title+"\'")
+                    titles.append("\'"+title+"\'")
                     cPrices.append(cprice)
                     tPrices.append(price)
                 except:
-                    logError.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S")+' Error en la página '+str(firstPage)+' elemento '+a["data-ds-itemkey"]+'\n')
+                    logError.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S")+' Error en la página '+str(firstPage)+' elemento '+id+'\n')
 
         firstPage += 1
 
-    df = pandas.DataFrame(data={"Date": dates, "Name": names, "Total price": tPrices, "Current price": cPrices, "Image path": imgPaths})
+    df = pandas.DataFrame(data={"ID": ids, "Date": dates, "Name": titles, "Total price": tPrices, "Current price": cPrices, "Image path": imgPaths})
     dfList.append(df)
 
 parser = argparse.ArgumentParser()
