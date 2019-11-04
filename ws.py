@@ -56,7 +56,7 @@ def scrThread(firstPage, lastPage, dfList):
     tPrices = []
     imgPaths = []
     
-    while(firstPage <= lastPage):
+    while(firstPage < lastPage):
         intentos = 0
         resultsRows = None
 
