@@ -9,7 +9,7 @@ import shutil
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-startTime = time.clock()
+startTime = time.process_time()
  
 def formatNumber(numb):
     n = ''.join(c for c in numb if c.isdigit() or c == ',')
@@ -138,4 +138,4 @@ for t in trList:
 df = fusionDataFrame(dfList)
 dataToCSV(df, csvRoute)
 
-print("Finished in %s seconds" % round((time.clock() - startTime),2))
+print("Finished in %s seconds" % round((time.process_time() - startTime),2))
