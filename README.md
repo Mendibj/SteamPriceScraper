@@ -10,3 +10,12 @@ Además, a la ejecución del script se le podrán añadir tres parámetros opcio
 * `--fp n` FirstPage: Página n desde la que comenzará el scraping (página 1 si se omite).
 * `--lp n` LastPage: Página n hasta la que se realizará el scraping (máximo si se omite).
 * `--t n`  Threads: Número de threads que utilizará el script (1 si se omite).
+
+
+Bibliotecas necesarias:
+```
+pip install requests
+pip install pandas
+pip install beautifulsoup4
+pip install lxml
+```
