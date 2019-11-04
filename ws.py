@@ -118,6 +118,7 @@ logError = open("Logs_error.txt","a",encoding='utf-8')
 
 firstPage = int(args.fp) if args.fp != None else 1
 lastPage = int(args.lp) if args.lp != None else getLastPage(strPage)
+lastPage += 1
 nThreads = int(args.t) if args.t != None else 1
 csvRoute = "csv/data.csv"
 
